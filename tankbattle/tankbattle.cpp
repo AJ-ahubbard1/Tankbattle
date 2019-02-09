@@ -95,6 +95,7 @@ class Global {
 	Shape ground;
 	Tank tank[2];	
 	bool loaded[2];
+	bool alive[2];
 	int keyhits[KEYS];
 	Bullet bullet[2];
 	Global() {
@@ -102,8 +103,10 @@ class Global {
 		yres = 750;
 		loaded[P1] = true;
 		loaded[P2] = true;
+		alive[P1] = true;
+		alive[P2] = true;
 		//define barrier shape
-		barrier.width = 5;
+		barrier.width = 15;
 		barrier.height = yres/4;
 		barrier.center.x = xres/2;
 		ground.width = xres;
@@ -295,24 +298,16 @@ int check_keys(XEvent *e)
 
 void movement() 
 {
+if(g.alive[P1]) {	
 	// Spacebar
 	if (g.keyhits[32])
 		makebullet(P1);
-	// numkey 0 
-	if (g.keyhits[38])
-		makebullet(P2);
 	// a
 	if (g.keyhits[97])
 		g.tank[P1].pos.x -= SPEED;
 	// d
 	if (g.keyhits[0])
 		g.tank[P1].pos.x += SPEED;
-	// left arrow
-	if (g.keyhits[61])
-		g.tank[P2].pos.x -= SPEED;
-	// right arrow
-	if (g.keyhits[63])
-		g.tank[P2].pos.x += SPEED;
 	// w
 	if (g.keyhits[19]) {
 		g.tank[P1].gun.aim.y += POW;
@@ -324,18 +319,6 @@ void movement()
 		g.tank[P1].gun.aim.y -= POW;
 		if (g.tank[P1].gun.aim.y < 5.0)
 			g.tank[P1].gun.aim.y = 5.0;
-	}
-	// up arrow
-	if (g.keyhits[62]) {
-		g.tank[P2].gun.aim.y += POW;
-		if (g.tank[P2].gun.aim.y > MAXPOWER)
-			g.tank[P2].gun.aim.y = MAXPOWER;
-	}
-	// down arrow
-	if (g.keyhits[64]) {
-		g.tank[P2].gun.aim.y -= POW;
-		if (g.tank[P2].gun.aim.y < 5.0)
-			g.tank[P2].gun.aim.y = 5.0;
 	}
 	// q
 	if (g.keyhits[13]) {
@@ -349,6 +332,29 @@ void movement()
 		if (g.tank[P1].gun.aim.x < TILT)
 			g.tank[P1].gun.aim.x = TILT;
 	}
+}
+if(g.alive[P2]) {
+	// numkey 0 
+	if (g.keyhits[38])
+		makebullet(P2);
+	// left arrow
+	if (g.keyhits[61])
+		g.tank[P2].pos.x -= SPEED;
+	// right arrow
+	if (g.keyhits[63])
+		g.tank[P2].pos.x += SPEED;
+	// up arrow
+	if (g.keyhits[62]) {
+		g.tank[P2].gun.aim.y += POW;
+		if (g.tank[P2].gun.aim.y > MAXPOWER)
+			g.tank[P2].gun.aim.y = MAXPOWER;
+	}
+	// down arrow
+	if (g.keyhits[64]) {
+		g.tank[P2].gun.aim.y -= POW;
+		if (g.tank[P2].gun.aim.y < 5.0)
+			g.tank[P2].gun.aim.y = 5.0;
+	}
 	// 3	
 	if (g.keyhits[35]) {
 		g.tank[P2].gun.aim.x -= TILT;
@@ -361,6 +367,8 @@ void movement()
 		if (g.tank[P2].gun.aim.x > PI - TILT)
 			g.tank[P2].gun.aim.x = PI - TILT;
 	}
+}
+	// t troubleshoot button
 	if (g.keyhits[16]) {
 		cout << "\nPlayer 1\nPower: " << g.tank[P1].gun.aim.y << endl;
 		cout << "Angle: " << g.tank[P1].gun.aim.x << endl;
@@ -446,20 +454,27 @@ void movement()
 		if ((b->s.center.y < w->height) && 
 		    (b->s.center.x > w->center.x - w->width) &&
 		    (b->s.center.x < w->center.x + w->width)) {
-			b->s.center.x = -10;
-		 	b->s.center.y = -10;
+			b->s.center.x = -1;
+		 	b->s.center.y = -1;
+			b->velocity.x = 0;
+			b->velocity.y = 0;
 		}
 	}
 	for (int i = 0; i < 2; i++) {
 	for (int j = 0; j < 2; j++) {
 		Bullet *b = &g.bullet[i];
 		Tank *t = &g.tank[j];		
-		if ( (i != j) && (b->s.center.y < t->body.height) && 
- 			(b->s.center.x > t->pos.x - t->body.width) &&
-		    	(b->s.center.x < t->pos.x + t->body.width)) {
-				b->s.center.x = -10;
-			 	b->s.center.y = -10;
+		if ( (i != j) && (b->s.center.y < t->pos.y + t->body.height) && 
+ 		     		 (b->s.center.y > t->pos.y - t->body.height) && 
+				 (b->s.center.x > t->pos.x - t->body.width) &&
+		    	         (b->s.center.x < t->pos.x + t->body.width)) {
+				b->s.center.x = -1;
+			 	b->s.center.y = -1;
+				b->velocity.x = 0;
+				b->velocity.y = 0;
 				t->healthbar.width -= HITLOSS;
+				if (t->healthbar.width <= 0) 
+					g.alive[j] = false;
 		}
 	}
 	}		
@@ -467,7 +482,7 @@ void movement()
 	// powerbar 
 	g.tank[P1].powerbar.height = g.tank[P1].gun.aim.y * g.tank[P1].gun.aim.y;
 	g.tank[P2].powerbar.height = g.tank[P2].gun.aim.y * g.tank[P2].gun.aim.y;
-
+	
 }
 
 void render() 
