@@ -54,7 +54,8 @@ const int WIDTH = 40;
 const int HEIGHT = 30;
 const int KEYS = 98;
 const int RADIUS = 4;
-const float HITLOSS = 24;
+const float HITLOSS = 24; // FUll Health = 120
+
 //some structures
 struct Vec {
 	float x, y, z;
@@ -99,8 +100,8 @@ class Global {
 	int keyhits[KEYS];
 	Bullet bullet[2];
 	Global() {
-		xres = 1000;
-		yres = 750;
+		xres = 1200;
+		yres = 900;
 		loaded[P1] = true;
 		loaded[P2] = true;
 		alive[P1] = true;
@@ -114,7 +115,7 @@ class Global {
 		tank[P1].body.width = tank[P2].body.width = WIDTH;
 		tank[P1].body.height = tank[P2].body.height = HEIGHT;
 		tank[P1].gun.s.width = tank[P2].gun.s.width = WIDTH;
-		tank[P1].gun.s.height = tank[P2].gun.s.height = 10;
+		tank[P1].gun.s.height = tank[P2].gun.s.height = 8;
 		tank[P1].gun.aim.x = TILT;
 		tank[P2].gun.aim.x = PI - TILT;
 		tank[P1].gun.aim.y = tank[P2].gun.aim.y = 10.0;
