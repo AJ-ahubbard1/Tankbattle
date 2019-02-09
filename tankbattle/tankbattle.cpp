@@ -504,8 +504,13 @@ void render()
 	for (int i = 0; i <8; i++) {	   
 		if ( i == 4 || i == 5)
 			glColor3ub(150,160,220);
+		else if ( i > 5 && bs[i]->width < 50) {
+			glColor3ub(255,128,0);
+			if (bs[i]->width < 25)					
+				glColor3ub(255,0,0);			 
+		}	
 		else
-			glColor3ub(90,140,90);
+			glColor3ub(90,140,90);	
 		glPushMatrix();
 		glTranslatef(bs[i]->center.x, bs[i]->center.y, bs[i]->center.z);    
 		w = bs[i]->width;
