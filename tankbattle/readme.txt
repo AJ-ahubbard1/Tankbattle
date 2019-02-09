@@ -1,5 +1,26 @@
 Keyboard input/output
 
+esc 65307
+
+Player 1
+space 32	fire
+w 119		power up
+a 97		pos left
+s 115		power down
+d 100		pos right
+q 113		tilt inc
+e 101		tilt dec
+
+Player 2  numbers on numpad
+0 65438		fire
+U 65362		power up
+D 65364		power down
+L 65361		pos left
+R 65363		pos right
+1 65436		tilt dec
+3 65435		tilt inc
+
+Full keyboard I/O codes
 arrows
 U 65362
 D 65364
