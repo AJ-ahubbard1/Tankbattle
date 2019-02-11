@@ -46,7 +46,7 @@ const float SPEED = 2.0;
 const float GRAVITY = -0.3;
 const float PI = 3.1415926535;
 const float TILT = .02;
-const float MAXPOWER = 20;
+const float MAXPOWER = 21;
 const float POW = .25;
 const int P1 = 0;
 const int P2 = 1;
@@ -55,7 +55,7 @@ const int HEIGHT = 30;
 const int KEYS = 98;
 const int RADIUS = 4;
 const float HITLOSS = 24; // FUll Health = 120
-
+int shot[2] = {0};
 //some structures
 struct Vec {
 	float x, y, z;
@@ -107,7 +107,7 @@ class Global {
 		alive[P1] = true;
 		alive[P2] = true;
 		//define barrier shape
-		barrier.width = 15;
+		barrier.width = 20;
 		barrier.height = yres/4;
 		barrier.center.x = xres/2;
 		ground.width = xres;
@@ -127,7 +127,6 @@ class Global {
 		tank[P1].powerbar.center.x = 0;
 		tank[P1].powerbar.center.y = yres/2;
 		tank[P2].powerbar.height = tank[P2].gun.aim.y * tank[P2].gun.aim.y;
-		tank[P2].powerbar.height = 100;	
 		tank[P2].powerbar.width = 5.0;
 		tank[P2].powerbar.center.x = xres;
 		tank[P2].powerbar.center.y = yres/2;
@@ -379,12 +378,12 @@ if(g.alive[P2]) {
 
 
 	// Keeps tanks in barriers
-	if (g.tank[P1].pos.x > g.xres/2 - WIDTH - 5) {
-		g.tank[P1].pos.x = g.xres/2 - WIDTH - 5;
+	if (g.tank[P1].pos.x > g.xres/2 - WIDTH - g.barrier.width) {
+		g.tank[P1].pos.x = g.xres/2 - WIDTH - g.barrier.width;
 		g.tank[P1].pos.z = 0;
 	}
-	if (g.tank[P2].pos.x < g.xres/2 + WIDTH + 5) {
-		g.tank[P2].pos.x = g.xres/2 + WIDTH + 5;
+	if (g.tank[P2].pos.x < g.xres/2 + WIDTH + g.barrier.width) {
+		g.tank[P2].pos.x = g.xres/2 + WIDTH + g.barrier.width;
 		g.tank[P2].pos.z = 0;
 	}
 	if (g.tank[P1].pos.x < WIDTH) {
@@ -466,16 +465,17 @@ if(g.alive[P2]) {
 		Bullet *b = &g.bullet[i];
 		Tank *t = &g.tank[j];		
 		if ( (i != j) && (b->s.center.y < t->pos.y + t->body.height) && 
- 		     		 (b->s.center.y > t->pos.y - t->body.height) && 
-				 (b->s.center.x > t->pos.x - t->body.width) &&
-		    	         (b->s.center.x < t->pos.x + t->body.width)) {
-				b->s.center.x = -1;
-			 	b->s.center.y = -1;
-				b->velocity.x = 0;
-				b->velocity.y = 0;
-				t->healthbar.width -= HITLOSS;
-				if (t->healthbar.width <= 0) 
-					g.alive[j] = false;
+ 	             (b->s.center.y > t->pos.y - t->body.height) && 
+		      (b->s.center.x > t->pos.x - t->body.width) &&
+		      (b->s.center.x < t->pos.x + t->body.width)) {
+			b->s.center.x = -1;
+		 	b->s.center.y = -1;
+			b->velocity.x = 0;
+			b->velocity.y = 0;
+			t->healthbar.width -= HITLOSS;
+			shot[j] = 10;
+			if (t->healthbar.width <= 0) 
+				g.alive[j] = false;
 		}
 	}
 	}		
@@ -502,8 +502,11 @@ void render()
 	bs[6] = &g.tank[P1].healthbar;
 	bs[7] = &g.tank[P2].healthbar;
 	float w, h; 
-	for (int i = 0; i <8; i++) {	   
-		if ( i == 4 || i == 5)
+	for (int i = 0; i < 8; i++) {
+		if ((i == 2 && shot[P1] > 0) || (i == 3 && shot[P2] > 0)) { 	
+			glColor3ub(255,255,255);
+		}
+		else if ( i == 4 || i == 5)
 			glColor3ub(150,160,220);
 		else if ( i > 5 && bs[i]->width < 50) {
 			glColor3ub(255,128,0);
@@ -531,7 +534,10 @@ void render()
        	s[0] = &g.tank[P1].gun;
        	s[1] = &g.tank[P2].gun;
 	for (int i = 0; i < 2; i++) {	   
-		glColor3ub(90,140,90);
+		if (shot[i]-- > 0)
+			glColor3ub(255,255,255);
+		else
+			glColor3ub(90,140,90);
 		glPushMatrix();
 		glTranslatef(bs[i]->center.x, bs[i]->center.y, bs[i]->center.z);    
 		glBegin(GL_QUADS);
@@ -542,7 +548,10 @@ void render()
 		glEnd();
 		glPopMatrix();
 		i++;
-		glColor3ub(90,140,90);
+		if (shot[i]-- > 0)
+			glColor3ub(255,255,255);
+		else
+			glColor3ub(90,140,90);
 		glPushMatrix();
 		glTranslatef(bs[i]->center.x, bs[i]->center.y, bs[i]->center.z);    
 		glBegin(GL_QUADS);
