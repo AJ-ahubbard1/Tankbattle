@@ -92,6 +92,7 @@ class Global {
 	public:
 	int xres, yres;
 	int xmouse, ymouse;
+	int P1wins, P2wins = 0;
 	Shape barrier;
 	Shape ground;
 	Tank tank[2];	
@@ -138,7 +139,7 @@ class Global {
 		tank[P2].healthbar.width = 120.0;
 		tank[P2].healthbar.center.x = (xres*3)/4;
 		tank[P2].healthbar.center.y = yres - 10;
-			
+
 	}
 } g;
 
@@ -204,6 +205,7 @@ class X11_wrapper {
 //Function prototypes
 void init_opengl(void);
 int check_keys(XEvent *e);
+void restart();
 void movement();
 void render();
 
@@ -296,78 +298,105 @@ int check_keys(XEvent *e)
 	return 0;
 }
 
+void restart() 
+{
+		//loaded[P1] = true;
+		//loaded[P2] = true;
+		if (g.alive[P1])
+		       g.P1wins++;	
+		if (g.alive[P2]) 
+		       g.P2wins++;	
+		g.alive[P1] = true;
+		g.alive[P2] = true;
+		//define barrier shape
+		g.tank[P1].gun.aim.x = TILT;
+		g.tank[P2].gun.aim.x = PI - TILT;
+		g.tank[P1].gun.aim.y = g.tank[P2].gun.aim.y = 10.0;
+		g.tank[P1].pos.x = g.xres/4;
+		g.tank[P2].pos.x = (g.xres/4)*3;
+		g.tank[P1].pos.y = g.tank[P2].pos.y = 5;
+		g.tank[P1].powerbar.height = g.tank[P1].gun.aim.y * g.tank[P1].gun.aim.y;
+		g.tank[P2].powerbar.height = g.tank[P2].gun.aim.y * g.tank[P2].gun.aim.y;
+		g.tank[P1].healthbar.width = 120.0;
+		g.tank[P2].healthbar.width = 120.0;
+}
+
+
+
+
+
 void movement() 
 {
-if(g.alive[P1]) {	
-	// Spacebar
-	if (g.keyhits[32])
-		makebullet(P1);
-	// a
-	if (g.keyhits[97])
-		g.tank[P1].pos.x -= SPEED;
-	// d
-	if (g.keyhits[0])
-		g.tank[P1].pos.x += SPEED;
-	// w
-	if (g.keyhits[19]) {
-		g.tank[P1].gun.aim.y += POW;
-		if (g.tank[P1].gun.aim.y > MAXPOWER)
-			g.tank[P1].gun.aim.y = MAXPOWER;
+	if (g.alive[P1]) {	
+		// Spacebar
+		if (g.keyhits[32])
+			makebullet(P1);
+		// a
+		if (g.keyhits[97])
+			g.tank[P1].pos.x -= SPEED;
+		// d
+		if (g.keyhits[0])
+			g.tank[P1].pos.x += SPEED;
+		// w
+		if (g.keyhits[19]) {
+			g.tank[P1].gun.aim.y += POW;
+			if (g.tank[P1].gun.aim.y > MAXPOWER)
+				g.tank[P1].gun.aim.y = MAXPOWER;
+		}
+		// s
+		if (g.keyhits[15]) {
+			g.tank[P1].gun.aim.y -= POW;
+			if (g.tank[P1].gun.aim.y < 5.0)
+				g.tank[P1].gun.aim.y = 5.0;
+		}
+		// q
+		if (g.keyhits[13]) {
+			g.tank[P1].gun.aim.x += TILT;
+			if (g.tank[P1].gun.aim.x > PI/2)
+				g.tank[P1].gun.aim.x = PI/2;
+		}
+		// e
+		if (g.keyhits[1]) {
+			g.tank[P1].gun.aim.x -= TILT;
+			if (g.tank[P1].gun.aim.x < TILT)
+				g.tank[P1].gun.aim.x = TILT;
+		}
 	}
-	// s
-	if (g.keyhits[15]) {
-		g.tank[P1].gun.aim.y -= POW;
-		if (g.tank[P1].gun.aim.y < 5.0)
-			g.tank[P1].gun.aim.y = 5.0;
-	}
-	// q
-	if (g.keyhits[13]) {
-		g.tank[P1].gun.aim.x += TILT;
-		if (g.tank[P1].gun.aim.x > PI/2)
-			g.tank[P1].gun.aim.x = PI/2;
-	}
-	// e
-	if (g.keyhits[1]) {
-		g.tank[P1].gun.aim.x -= TILT;
-		if (g.tank[P1].gun.aim.x < TILT)
-			g.tank[P1].gun.aim.x = TILT;
-	}
-}
-if(g.alive[P2]) {
-	// numkey 0 
-	if (g.keyhits[38])
-		makebullet(P2);
-	// left arrow
-	if (g.keyhits[61])
-		g.tank[P2].pos.x -= SPEED;
-	// right arrow
-	if (g.keyhits[63])
-		g.tank[P2].pos.x += SPEED;
-	// up arrow
-	if (g.keyhits[62]) {
-		g.tank[P2].gun.aim.y += POW;
-		if (g.tank[P2].gun.aim.y > MAXPOWER)
-			g.tank[P2].gun.aim.y = MAXPOWER;
-	}
-	// down arrow
-	if (g.keyhits[64]) {
-		g.tank[P2].gun.aim.y -= POW;
-		if (g.tank[P2].gun.aim.y < 5.0)
-			g.tank[P2].gun.aim.y = 5.0;
-	}
-	// 3	
-	if (g.keyhits[35]) {
-		g.tank[P2].gun.aim.x -= TILT;
-		if (g.tank[P2].gun.aim.x < PI/2)
-			g.tank[P2].gun.aim.x = PI/2;
-	}
-	// 1	
-	if (g.keyhits[36]) {
-		g.tank[P2].gun.aim.x += TILT;
-		if (g.tank[P2].gun.aim.x > PI - TILT)
-			g.tank[P2].gun.aim.x = PI - TILT;
-	}
-}
+	if (g.alive[P2]) {
+ 	       // numkey 0 
+ 	       if (g.keyhits[38])
+ 	       	makebullet(P2);
+ 	       // left arrow
+ 	       if (g.keyhits[61])
+ 	       	g.tank[P2].pos.x -= SPEED;
+ 	       // right arrow
+ 	       if (g.keyhits[63])
+ 	       	g.tank[P2].pos.x += SPEED;
+ 	       // up arrow
+ 	       if (g.keyhits[62]) {
+ 	       	g.tank[P2].gun.aim.y += POW;
+ 	       	if (g.tank[P2].gun.aim.y > MAXPOWER)
+ 	       		g.tank[P2].gun.aim.y = MAXPOWER;
+ 	       }
+ 	       // down arrow
+ 	       if (g.keyhits[64]) {
+ 	       	g.tank[P2].gun.aim.y -= POW;
+ 	       	if (g.tank[P2].gun.aim.y < 5.0)
+ 	       		g.tank[P2].gun.aim.y = 5.0;
+ 	       }
+ 	       // 3	
+ 	       if (g.keyhits[35]) {
+ 	       	g.tank[P2].gun.aim.x -= TILT;
+ 	       	if (g.tank[P2].gun.aim.x < PI/2)
+ 	       		g.tank[P2].gun.aim.x = PI/2;
+ 	       }
+ 	       // 1	
+ 	       if (g.keyhits[36]) {
+ 	       	g.tank[P2].gun.aim.x += TILT;
+ 	       	if (g.tank[P2].gun.aim.x > PI - TILT)
+ 	       		g.tank[P2].gun.aim.x = PI - TILT;
+ 	       }
+	}	
 	// t troubleshoot button
 	if (g.keyhits[16]) {
 		cout << "\nPlayer 1\nPower: " << g.tank[P1].gun.aim.y << endl;
@@ -484,6 +513,14 @@ if(g.alive[P2]) {
 	g.tank[P1].powerbar.height = g.tank[P1].gun.aim.y * g.tank[P1].gun.aim.y;
 	g.tank[P2].powerbar.height = g.tank[P2].gun.aim.y * g.tank[P2].gun.aim.y;
 	
+	if (!g.alive[P1] || !g.alive[P2]) {
+		if (g.keyhits[93]) {
+			restart();
+		}
+	}
+
+
+		
 }
 
 void render() 
@@ -576,14 +613,45 @@ void render()
 		glEnd();
 	}    	
 	glPopMatrix();
-	/* Draw your 2D text here
-	Rect r[5];
-	unsigned int c = 0x00ffff44;
-	r[0].bot = g.box[0].center.y-5;
-	r[0].left = g.box[0].center.x-39;
-	r[0].center = 0;
-	ggprint8b(&r[0], 16, c, "REQUIREMENTS");
-	*/
+	// Draw your 2D text here
+	if (!g.alive[P1]) { 
+		Rect r;
+		unsigned int c = 0x00ffff44;
+		r.bot = .75*g.yres;
+		r.left = .43*g.xres;
+		r.center = 0;
+		ggprint8b(&r, 16, c, "PLAYER 2 WINS...PLAY AGAIN?");
+		ggprint8b(&r, 16, c, "          PRESS ENTER");
+
+	} else if (!g.alive[P2]) { 
+		Rect r;
+		unsigned int c = 0x00ffff44;
+		r.bot = .75*g.yres;
+		r.left = .43*g.xres;
+		r.center = 0;
+		ggprint8b(&r, 16, c, "PLAYER 1 WINS...PLAY AGAIN?");
+		ggprint8b(&r, 16, c, "          PRESS ENTER");
+	}
+	if (g.P1wins) {
+		Rect r;
+		unsigned int c = 0x00ffff44;
+		r.bot = .99*g.yres;
+		r.left = 10;
+		r.center = 0;
+		for (int i = 0; i < g.P1wins; i++) {
+			ggprint8b(&r, 16, c, "X");
+		}
+	}
+	if (g.P2wins) {
+		Rect r;
+		unsigned int c = 0x00ffff44;
+		r.bot = .99*g.yres;
+		r.left = g.xres-16;
+		r.center = 0;
+		for (int i = 0; i < g.P2wins; i++) {
+			ggprint8b(&r, 16, c, "X");
+		}
+	}
 }
 
 
