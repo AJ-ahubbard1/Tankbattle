@@ -1,33 +1,9 @@
-// Waterwheel
+//Tank Battle 
 //modified by: Andrew Hubbard
 //date: 2/9/2019
 //
-//3350 Spring 2018 Lab-1
+//Orignally: 3350 Spring 2018 Lab-1
 //This program demonstrates the use of OpenGL and XWindows
-//
-//Assignment is to modify this program.
-//You will follow along with your instructor.
-//
-//Elements to be learned in this lab...
-// .general animation framework
-// .animation loop
-// .object definition and movement
-// .collision detection
-// .mouse/keyboard interaction
-// .object constructor
-// .coding style
-// .defined constants
-// .use of static variables
-// .dynamic memory allocation
-// .simple opengl components
-// .git
-//
-//elements we will add to program...
-//   .Game constructor
-//   .multiple bullets
-//   .gravity
-//   .collision detection
-//   .more objects
 //
 #include <iostream>
 using namespace std;
@@ -55,6 +31,7 @@ const int HEIGHT = 30;
 const int KEYS = 98;
 const int RADIUS = 4;
 const float HITLOSS = 24; // FUll Health = 120
+const int RAINBOW = 5;
 int shot[2] = {0};
 //some structures
 struct Vec {
@@ -107,6 +84,7 @@ class Global {
 		loaded[P2] = true;
 		alive[P1] = true;
 		alive[P2] = true;
+		
 		//define barrier shape
 		barrier.width = 20;
 		barrier.height = yres/4;
@@ -139,7 +117,6 @@ class Global {
 		tank[P2].healthbar.width = 120.0;
 		tank[P2].healthbar.center.x = (xres*3)/4;
 		tank[P2].healthbar.center.y = yres - 10;
-
 	}
 } g;
 
@@ -321,10 +298,6 @@ void restart()
 		g.tank[P2].healthbar.width = 120.0;
 }
 
-
-
-
-
 void movement() 
 {
 	if (g.alive[P1]) {	
@@ -489,7 +462,7 @@ void movement()
 			b->velocity.y = 0;
 		}
 	}
-	for (int i = 0; i < 2; i++) {
+    	for (int i = 0; i < 2; i++) {
 	for (int j = 0; j < 2; j++) {
 		Bullet *b = &g.bullet[i];
 		Tank *t = &g.tank[j];		
@@ -570,10 +543,15 @@ void render()
 	Gun *s[2];
        	s[0] = &g.tank[P1].gun;
        	s[1] = &g.tank[P2].gun;
-	for (int i = 0; i < 2; i++) {	   
+	
+	// quasi-for-loop, i incremented before player 2 drawn
+	for (int i = 0; i < 2; i++) {
+		// Player 1 gun drawn
 		if (shot[i]-- > 0)
 			glColor3ub(255,255,255);
-		else
+		else if (g.P1wins >= RAINBOW) 
+			glColor3ub(rand() % 256, rand() % 256, rand() % 256);
+		else	
 			glColor3ub(90,140,90);
 		glPushMatrix();
 		glTranslatef(bs[i]->center.x, bs[i]->center.y, bs[i]->center.z);    
@@ -585,8 +563,11 @@ void render()
 		glEnd();
 		glPopMatrix();
 		i++;
+		// Player 2 gun drawn
 		if (shot[i]-- > 0)
 			glColor3ub(255,255,255);
+		else if (g.P2wins >= RAINBOW) 
+			glColor3ub(rand() % 256, rand() % 256, rand() % 256);
 		else
 			glColor3ub(90,140,90);
 		glPushMatrix();
@@ -601,8 +582,11 @@ void render()
 	}
 	//Draw the bullet here
 	glPushMatrix();
-	glColor3ub(150,160,220);
 	for (int i = 0; i < 2; i++) {
+		if ((i == 0 && g.P1wins >= RAINBOW) || (i == 1 && g.P2wins >= RAINBOW))
+			glColor3ub(rand() % 256, rand() % 256, rand() % 256);
+		else
+			glColor3ub(150,160,220);
 		Vec *c = &g.bullet[i].s.center;
 		w = h = RADIUS;
 		glBegin(GL_QUADS);
