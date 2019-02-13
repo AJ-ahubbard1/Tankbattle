@@ -30,8 +30,8 @@ const int WIDTH = 40;
 const int HEIGHT = 30;
 const int KEYS = 98;
 const int RADIUS = 4;
-const float HITLOSS = 24; // FUll Health = 120
-const float CHARGE = .1;
+const float HITLOSS = 20; // FUll Health = 120
+const float CHARGE = .2;
 const int RAINBOW = 5;
 int shot[2] = {0};
 //some structures
@@ -267,12 +267,12 @@ int check_keys(XEvent *e)
 	*/	
 	if (e->type == KeyRelease) {
 		g.keyhits[key%100] = 0;
-		cout << key % 100 << ": Key Released\n";
+		//cout << key % 100 << ": Key Released\n";
 	}
 	
 	if (e->type == KeyPress) {
 		g.keyhits[key%100] = 1;
-		 cout << key % 100 << ": Key Pressed\n";
+		//cout << key % 100 << ": Key Pressed\n";
 		if(key == XK_Escape)
 			return 1;
 	}
@@ -308,8 +308,11 @@ void movement()
 		// Spacebar
 		if (g.keyhits[32]) {
  	       		g.growth[P1] += CHARGE;
+			if (g.growth[P1] > 40.0) 
+			    g.growth[P1] =40.0;
 			makebullet(P1,RADIUS + g.growth[P1]);
-			g.charging[P1] = true;
+			if (g.growth[P1] > 10*CHARGE)
+				g.charging[P1] = true;
 		}
 		else {
 		    g.growth[P1] = 0;
@@ -352,8 +355,11 @@ void movement()
  	       // numkey 0 
  	       if (g.keyhits[38]) {
  	       		g.growth[P2] += CHARGE;
+			if (g.growth[P2] > 40.0) 
+			    g.growth[P2] =40.0;
 		   	makebullet(P2,RADIUS + g.growth[P2]);
-	       		g.charging[P2] = true;	
+			if (g.growth[P2] > 10*CHARGE)
+	       			g.charging[P2] = true;	
 	       }
 	       else {
 		   g.growth[P2] = 0;
@@ -475,9 +481,9 @@ void movement()
 		t->body.center.y = t->pos.y;
 		
 		Shape *w = &g.barrier;
-		if ((b->s.center.y < w->height) && 
-		    (b->s.center.x > w->center.x - w->width) &&
-		    (b->s.center.x < w->center.x + w->width)) {
+		if ((b->s.center.y - b->s.height < w->height) && 
+		    (b->s.center.x + b->s.height > w->center.x - w->width) &&
+		    (b->s.center.x - b->s.width < w->center.x + w->width)) {
 			b->s.center.x = -g.xres;
 		 	b->s.center.y = -g.yres;
 			b->velocity.x = 0;
@@ -496,7 +502,8 @@ void movement()
 		 	b->s.center.y = -g.yres;
 			b->velocity.x = 0;
 			b->velocity.y = 0;
-			t->healthbar.width -= HITLOSS;
+			t->healthbar.width -= b->s.width + HITLOSS;
+			cout << "Damage = " << b->s.width + HITLOSS << endl;
 			shot[j] = 10;
 			if (t->healthbar.width <= 0) 
 				g.alive[j] = false;
@@ -538,7 +545,7 @@ void render()
 		if ((i == 2 && shot[P1] > 0) || (i == 3 && shot[P2] > 0)) { 	
 			glColor3ub(255,255,255);
 		}
-		else if ( i == 4 || i == 5)
+		else if ( i == 4 || i == 5) 
 			glColor3ub(150,160,220);
 		else if ( i > 5 && bs[i]->width < 50) {
 			glColor3ub(255,128,0);
