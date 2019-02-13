@@ -31,6 +31,7 @@ const int HEIGHT = 30;
 const int KEYS = 98;
 const int RADIUS = 4;
 const float HITLOSS = 24; // FUll Health = 120
+const float CHARGE = .1;
 const int RAINBOW = 5;
 int shot[2] = {0};
 //some structures
@@ -76,7 +77,9 @@ class Global {
 	bool loaded[2];
 	bool alive[2];
 	int keyhits[KEYS];
-	Bullet bullet[2];
+	Bullet bullet[2]; 
+	float growth[2] = {0.0,0.0};
+	bool charging[2];
 	Global() {
 		xres = 1200;
 		yres = 900;
@@ -84,7 +87,6 @@ class Global {
 		loaded[P2] = true;
 		alive[P1] = true;
 		alive[P2] = true;
-		
 		//define barrier shape
 		barrier.width = 20;
 		barrier.height = yres/4;
@@ -191,6 +193,7 @@ void render();
 //=====================================
 int main()
 {
+    	system("xset r off");
 	srand(time(NULL));
 	init_opengl();
 	//Main animation loop
@@ -206,6 +209,7 @@ int main()
 		x11.swapBuffers();
 	}
 	cleanup_fonts();
+    	system("xset r on");
 	return 0;
 }
 
@@ -225,15 +229,15 @@ void init_opengl(void)
 }
 
 // p for P1 or P2
-void makebullet(int p) {
+void makebullet(int p, float r) {
 	if (!g.loaded[p])
 		return;
 	float x, y;
 	Bullet *b = &g.bullet[p];
 	Tank *t = &g.tank[p];
 	
-	b->s.width = RADIUS;
-	b->s.height = RADIUS;
+	b->s.width = r;
+	b->s.height = r;
 	
 	x = (t->gun.v4.x +  t->gun.v3.x +
 	     t->gun.v2.x +  t->gun.v1.x) * .25;
@@ -263,12 +267,12 @@ int check_keys(XEvent *e)
 	*/	
 	if (e->type == KeyRelease) {
 		g.keyhits[key%100] = 0;
-		//cout << key % 100 << ": Key Released\n";
+		cout << key % 100 << ": Key Released\n";
 	}
 	
 	if (e->type == KeyPress) {
 		g.keyhits[key%100] = 1;
-		// cout << key % 100 << ": Key Pressed\n";
+		 cout << key % 100 << ": Key Pressed\n";
 		if(key == XK_Escape)
 			return 1;
 	}
@@ -302,14 +306,23 @@ void movement()
 {
 	if (g.alive[P1]) {	
 		// Spacebar
-		if (g.keyhits[32])
-			makebullet(P1);
-		// a
-		if (g.keyhits[97])
+		if (g.keyhits[32]) {
+ 	       		g.growth[P1] += CHARGE;
+			makebullet(P1,RADIUS + g.growth[P1]);
+			g.charging[P1] = true;
+		}
+		else {
+		    g.growth[P1] = 0;
+		    g.charging[P1] = false;
+		}
+		if (!g.charging[P1]) {
+		    // a
+		    if (g.keyhits[97])
 			g.tank[P1].pos.x -= SPEED;
-		// d
-		if (g.keyhits[0])
+		    // d
+		    if (g.keyhits[0])
 			g.tank[P1].pos.x += SPEED;
+		}
 		// w
 		if (g.keyhits[19]) {
 			g.tank[P1].gun.aim.y += POW;
@@ -337,14 +350,23 @@ void movement()
 	}
 	if (g.alive[P2]) {
  	       // numkey 0 
- 	       if (g.keyhits[38])
- 	       	makebullet(P2);
- 	       // left arrow
- 	       if (g.keyhits[61])
- 	       	g.tank[P2].pos.x -= SPEED;
- 	       // right arrow
- 	       if (g.keyhits[63])
- 	       	g.tank[P2].pos.x += SPEED;
+ 	       if (g.keyhits[38]) {
+ 	       		g.growth[P2] += CHARGE;
+		   	makebullet(P2,RADIUS + g.growth[P2]);
+	       		g.charging[P2] = true;	
+	       }
+	       else {
+		   g.growth[P2] = 0;
+		   g.charging[P2] = false;
+	       }
+	       // left arrow
+	       if (!g.charging[P2]) {
+ 	           if (g.keyhits[61])
+ 	       	   g.tank[P2].pos.x -= SPEED;
+ 	           // right arrow
+ 	           if (g.keyhits[63])
+ 	       	   g.tank[P2].pos.x += SPEED;
+	       }
  	       // up arrow
  	       if (g.keyhits[62]) {
  	       	g.tank[P2].gun.aim.y += POW;
@@ -456,8 +478,8 @@ void movement()
 		if ((b->s.center.y < w->height) && 
 		    (b->s.center.x > w->center.x - w->width) &&
 		    (b->s.center.x < w->center.x + w->width)) {
-			b->s.center.x = -1;
-		 	b->s.center.y = -1;
+			b->s.center.x = -g.xres;
+		 	b->s.center.y = -g.yres;
 			b->velocity.x = 0;
 			b->velocity.y = 0;
 		}
@@ -466,12 +488,12 @@ void movement()
 	for (int j = 0; j < 2; j++) {
 		Bullet *b = &g.bullet[i];
 		Tank *t = &g.tank[j];		
-		if ( (i != j) && (b->s.center.y < t->pos.y + t->body.height) && 
- 	             (b->s.center.y > t->pos.y - t->body.height) && 
-		      (b->s.center.x > t->pos.x - t->body.width) &&
-		      (b->s.center.x < t->pos.x + t->body.width)) {
-			b->s.center.x = -1;
-		 	b->s.center.y = -1;
+		if ( (i != j) && (b->s.center.y - b->s.height < t->pos.y + t->body.height) && 
+ 	             (b->s.center.y + b->s.height > t->pos.y - t->body.height) && 
+		      (b->s.center.x + b->s.width > t->pos.x - t->body.width) &&
+		      (b->s.center.x - b->s.width < t->pos.x + t->body.width)) {
+			b->s.center.x = -g.xres;
+		 	b->s.center.y = -g.yres;
 			b->velocity.x = 0;
 			b->velocity.y = 0;
 			t->healthbar.width -= HITLOSS;
@@ -588,12 +610,16 @@ void render()
 		else
 			glColor3ub(150,160,220);
 		Vec *c = &g.bullet[i].s.center;
-		w = h = RADIUS;
-		glBegin(GL_QUADS);
-		glVertex2i(c->x-w, c->y-h);
-		glVertex2i(c->x-w, c->y+h);
-		glVertex2i(c->x+w, c->y+h);
-		glVertex2i(c->x+w, c->y-h);
+		w = h = g.bullet[i].s.height;
+		//glBegin(GL_LINE_LOOP);
+		glBegin(GL_POLYGON);
+		for(int i = 0; i < 16; i++) {
+			glVertex2i(c->x +w*cos((PI*i)/8),c->y + h*sin((PI*i)/8));
+			//glVertex2i(c->x + w*(rand() % 5) * cos((PI*i)/8),c->y + h*(rand() % 5) * sin((PI*i)/8));
+			}
+		//glVertex2i(c->x-w, c->y+h);
+		//glVertex2i(c->x+w, c->y+h);
+		//glVertex2i(c->x+w, c->y-h);
 		glEnd();
 	}    	
 	glPopMatrix();
